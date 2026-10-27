@@ -1,0 +1,12 @@
+# Saídas e dados locais
+build/
+.pio/
+*.bin
+*.elf
+*.map
+.env
+.env.*
+secrets.h
+config_local.h
+resultados/privado/
+.DS_Store
