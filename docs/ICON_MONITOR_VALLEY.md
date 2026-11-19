@@ -29,3 +29,16 @@ A Valley documenta telemetria para Select2 e Pro2 por meio do CommanderVP, com r
 Os manuais devem ser escolhidos pela versão de software do painel. O manual Select2 2.00 documenta opções de baud e protocolo para os conectores de 9 e 25 pinos, RTU ID, posição atual e configuração do resolver. [Manual Select2 2.00](https://webassetsprod.valmont.com/valmontproduction/docs/librariesprovider129/owners-manuals/r-to-z-/select2-advanced-features.pdf?sfvrsn=9f0e139_4) · [Manual Pro2 9.02](https://webassetsprod.valmont.com/valmontproduction/docs/librariesprovider129/owners-manuals/i-to-q-/pro2-advanced-features.pdf?sfvrsn=c6f2e139_4)
 
 Para a central independente, a primeira validação é ler somente a posição em bancada com as cargas desconectadas. Depois de identificar a versão, a porta, a configuração serial e a fonte de posição do painel, o teste precisa comparar o valor recebido com o visor em pelo menos duas posições conhecidas. Para servir de redundância, a posição precisa continuar atualizando quando o GPS da ponta estiver indisponível, vir de uma fonte independente dele e ter validade e idade verificáveis pela central. A comparação com o GPS em operação normal deve estabelecer a referência e o sentido angular antes de usar essa leitura na parada programada.
+
+## Sonda de bancada para o Select2
+
+As fotos confirmam o modelo Select2 e mostram os conectores de 9 e 25 pinos. Para a arquitetura em que o painel executa o controle, o portal ProService usa a conexão de rede existente do HF-006eNET, e o ESP32 conversa com o Select2 pela porta de 9 pinos por meio de um transceptor UART 3,3 V ↔ RS-232. Confirme a pinagem, o cabo e a disponibilidade da interface elétrica. Registre a versão do software, `Baud 9-Pin`, `Protocol 9-Pin` e `RTU ID` no painel.
+
+A [sonda PowerShell](../tools/Testar-Select2.ps1) permite validar o protocolo no computador se houver um adaptador USB–RS-232 disponível. Use somente em bancada com as cargas desconectadas, após confirmar cabo e parâmetros. A sonda usa 8N1 como hipótese oriunda do ICON Monitor, envia uma única consulta experimental de estado e exibe o ângulo se a resposta atender aos critérios de validação, incluindo o identificador esperado `0005`. Em caso de incompatibilidade, preserva os bytes recebidos na mensagem de diagnóstico. Substitua `COM5` pela porta identificada do adaptador e informe o baud lido no painel.
+
+```powershell
+./tools/Testar-Select2.ps1 -Autoteste
+./tools/Testar-Select2.ps1 -Porta COM5 -Baud 9600
+```
+
+O autoteste confere o vetor TX, a leitura de 120,5° em uma resposta sintética e a rejeição de sequência ou CRC incorretos. A compatibilidade do Select2 e o driver no HF-006eNET ficam pendentes de uma captura real.
