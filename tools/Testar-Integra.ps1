@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Escutar', 'Enviar', 'Retorno')]
+    [ValidateSet('Escutar', 'Enviar', 'Retorno', 'Pulsos')]
     [string]$Modo = 'Escutar',
     [string]$Endereco = '169.254.1.1',
     [ValidateRange(1, 65535)]
@@ -14,8 +14,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-if ($Modo -eq 'Enviar' -and -not $AutorizarRF) {
-    throw 'O modo Enviar pode transmitir por RF. Use -AutorizarRF apenas com antena adequada conectada e sem equipamento de controle na ponta remota.'
+if ($Modo -in 'Enviar', 'Pulsos' -and -not $AutorizarRF) {
+    throw 'Este modo pode transmitir por RF. Use -AutorizarRF apenas com antena adequada conectada e sem equipamento de controle na ponta remota.'
 }
 if ($Modo -eq 'Retorno' -and -not $PonteIsolada) {
     throw 'Desconecte o radio e feche apenas os pinos 2 e 3 do DB9 do HF5111B. Depois use -PonteIsolada.'
@@ -30,6 +30,17 @@ try {
     $fluxo = $cliente.GetStream()
     $fluxo.ReadTimeout = 200
     $fluxo.WriteTimeout = 1000
+    if ($Modo -eq 'Pulsos') {
+        $cliente.NoDelay = $true
+        $padrao = [Text.Encoding]::ASCII.GetBytes('U' * 64)
+        "Enviando blocos de 64 bytes (0x55) a cada 500 ms por $Segundos segundos. Ctrl+C interrompe."
+        for ($bloco = 0; $bloco -lt ($Segundos * 2); $bloco++) {
+            $fluxo.Write($padrao, 0, $padrao.Length)
+            Start-Sleep -Milliseconds 500
+        }
+        "Envio TCP concluido: $($Segundos * 2) blocos, $($Segundos * 128) bytes."
+        return
+    }
     $tx = [Text.Encoding]::ASCII.GetBytes("$Mensagem`r`n")
 
     if ($Modo -ne 'Escutar') {
